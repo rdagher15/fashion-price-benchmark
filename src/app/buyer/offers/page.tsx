@@ -45,7 +45,7 @@ function OfferCard({ offer }: { offer: any }) {
     <Link href={`/buyer/offers/${offer.id}`} className="card block">
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-gray-900">{offer.listing.farmerProfile.farmName}</p>
-        <span className="text-xs font-bold text-harvest-600">{formatMoney(offer.price)}/{offer.priceUnit}</span>
+        <span className="text-xs font-bold text-mustard-600">{formatMoney(offer.price)}/{offer.priceUnit}</span>
       </div>
       <p className="text-xs text-gray-500">{offer.quantity} {offer.listing.unit} · {offer.listing.produceCategory.name} · {formatDate(offer.deliveryDate)}</p>
       <span className="mt-1 inline-block rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-600">{offer.status}</span>

@@ -3,7 +3,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import TopBar from "@/components/TopBar";
 import { formatDate, formatMoney } from "@/lib/format";
-import { OFFER_STATUS } from "@/lib/constants";
+import { OFFER_STATUS, BUYER_TYPES } from "@/lib/constants";
+import { anonymizedBuyerLabel } from "@/lib/anonymize";
 import OfferActions from "@/components/OfferActions";
 import NegotiationHistory from "@/components/NegotiationHistory";
 
@@ -28,14 +29,20 @@ export default async function FarmerOfferDetail({ params }: { params: { id: stri
   const isOpen = [OFFER_STATUS.PENDING, OFFER_STATUS.COUNTERED].includes(offer.status as any);
   const totalValue = offer.quantity * offer.price;
 
+  // Retailer identity is disclosed only once an Order exists — before that
+  // the farmer sees just the business type + general area.
+  const revealed = !!offer.order;
+  const buyerLabel = revealed ? offer.buyerProfile.businessName : await anonymizedBuyerLabel(offer.buyerProfile);
+  const buyerTypeLabel = BUYER_TYPES.find((t) => t.value === offer.buyerProfile.buyerType)?.label ?? offer.buyerProfile.buyerType;
+
   return (
     <div>
       <TopBar title="Offer details" backHref="/farmer/offers" />
       <div className="space-y-4 px-4 py-4">
         <div className="card">
-          <p className="text-xs font-semibold uppercase text-gray-400">Buyer</p>
-          <p className="text-lg font-bold">{offer.buyerProfile.businessName}</p>
-          <p className="text-sm text-gray-500">{offer.buyerProfile.buyerType.replace("_", " ")} · {offer.buyerProfile.city}, {offer.buyerProfile.region}</p>
+          <p className="text-xs font-semibold uppercase text-gray-400">{revealed ? "Buyer" : "Buyer (identity revealed once you accept)"}</p>
+          <p className="text-lg font-bold">{buyerLabel}</p>
+          {revealed && <p className="text-sm text-gray-500">{buyerTypeLabel} · {offer.buyerProfile.city}, {offer.buyerProfile.governorate}</p>}
         </div>
 
         <div className="card space-y-1 text-sm">

@@ -18,7 +18,7 @@ export default async function AdminBuyersPage() {
               <div>
                 <p className="font-semibold">{b.businessName}</p>
                 <p className="text-xs text-gray-500">{BUYER_TYPES.find((t) => t.value === b.buyerType)?.label || b.buyerType} · {b.user.email}</p>
-                <p className="text-xs text-gray-500">{b.city}, {b.region} · {b.requirements.length} requirement(s)</p>
+                <p className="text-xs text-gray-500">{b.city}, {b.governorate} · {b.crNumber ? `CR #${b.crNumber} · ` : ""}{b.requirements.length} request(s)</p>
               </div>
               <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${b.user.status === "SUSPENDED" ? "bg-red-50 text-red-500" : "bg-gray-100 text-gray-500"}`}>{b.user.status}</span>
             </div>

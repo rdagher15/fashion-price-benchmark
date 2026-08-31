@@ -25,7 +25,7 @@ export default async function NotificationsPage() {
           <Link key={n.id} href={n.link || homeHref} className={`card block ${!n.read ? "border-brand-200 bg-brand-50/40" : ""}`}>
             <div className="flex items-start justify-between gap-2">
               <p className="text-sm font-semibold text-gray-900">{n.title}</p>
-              {!n.read && <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-harvest-500" />}
+              {!n.read && <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-mustard-500" />}
             </div>
             <p className="text-xs text-gray-500">{n.body}</p>
             <p className="mt-1 text-[11px] text-gray-400">{new Date(n.createdAt).toLocaleString()}</p>

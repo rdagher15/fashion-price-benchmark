@@ -12,12 +12,9 @@ const schema = z.object({
   maxQuantity: z.number().optional(),
   unit: z.string().default("kg"),
   requiredDate: z.string(),
+  dateWindowDays: z.number().min(0).max(30).default(0),
   recurring: z.boolean().default(false),
   recurringFrequency: z.string().optional(),
-  deliveryLocationLabel: z.string().min(1),
-  deliveryAddress: z.string().optional(),
-  deliveryLatitude: z.number().optional(),
-  deliveryLongitude: z.number().optional(),
   packagingRequirement: z.string().optional(),
   qualityRequirement: z.string().optional(),
   productionRequirement: z.string().optional(),
@@ -50,6 +47,18 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     const data = parsed.data;
 
+    // Delivery is always to the retailer's registered location — precise
+    // coordinates were already captured at registration, so the request
+    // doesn't ask for an address again.
+    const buyerProfile = await prisma.buyerProfile.findUnique({
+      where: { id: user.buyerProfile!.id },
+      include: { deliveryLocations: true },
+    });
+    const primaryLocation = buyerProfile!.deliveryLocations.find((l) => l.isPrimary) || buyerProfile!.deliveryLocations[0];
+
+    const requiredDate = new Date(data.requiredDate);
+    const windowMs = data.dateWindowDays * 24 * 60 * 60 * 1000;
+
     const requirement = await prisma.requirement.create({
       data: {
         buyerProfileId: user.buyerProfile!.id,
@@ -58,19 +67,22 @@ export async function POST(req: NextRequest) {
         minQuantity: data.minQuantity,
         maxQuantity: data.maxQuantity,
         unit: data.unit,
-        requiredDate: new Date(data.requiredDate),
+        requiredDate,
+        dateMin: new Date(requiredDate.getTime() - windowMs),
+        dateMax: new Date(requiredDate.getTime() + windowMs),
         recurring: data.recurring,
         recurringFrequency: data.recurringFrequency,
-        deliveryLocationLabel: data.deliveryLocationLabel,
-        deliveryAddress: data.deliveryAddress,
-        deliveryLatitude: data.deliveryLatitude,
-        deliveryLongitude: data.deliveryLongitude,
+        deliveryLocationLabel: primaryLocation?.label ?? `${buyerProfile!.businessName} — main location`,
+        deliveryAddress: primaryLocation?.address,
+        deliveryLatitude: primaryLocation?.latitude ?? buyerProfile!.latitude,
+        deliveryLongitude: primaryLocation?.longitude ?? buyerProfile!.longitude,
         packagingRequirement: data.packagingRequirement,
         qualityRequirement: data.qualityRequirement,
         productionRequirement: data.productionRequirement,
         minPrice: data.minPrice,
         maxPrice: data.maxPrice,
         priceUnit: data.priceUnit,
+        anonymous: true,
       },
     });
 
@@ -80,6 +92,6 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     if (e instanceof AuthError) return NextResponse.json({ error: e.message }, { status: e.status });
     console.error(e);
-    return NextResponse.json({ error: "Failed to create requirement" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to create request" }, { status: 500 });
   }
 }

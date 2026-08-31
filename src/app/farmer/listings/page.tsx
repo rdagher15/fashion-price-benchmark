@@ -42,7 +42,7 @@ export default async function FarmerListingsPage() {
               </div>
               <div className="flex flex-col items-end gap-1">
                 <StatusPill status={l.status} />
-                {l.offers.length > 0 && <span className="text-[11px] font-semibold text-harvest-600">{l.offers.length} offer(s)</span>}
+                {l.offers.length > 0 && <span className="text-[11px] font-semibold text-mustard-600">{l.offers.length} offer(s)</span>}
                 {l.matches.length > 0 && <span className="text-[11px] text-gray-400">{l.matches.length} match(es)</span>}
               </div>
             </div>

@@ -12,7 +12,7 @@ export default function TopBar({
   backHref?: string;
 }) {
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-gray-100 bg-fbfbf9/95 bg-white/95 px-4 py-3 backdrop-blur">
+    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-cream-200 bg-white/95 px-4 py-3 backdrop-blur">
       <div className="flex items-center gap-2">
         {backHref && (
           <Link href={backHref} className="text-lg text-gray-500">
@@ -27,7 +27,7 @@ export default function TopBar({
       <Link href="/notifications" className="relative text-xl">
         🔔
         {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-harvest-600 px-1 text-[10px] font-bold text-white">
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-mustard-600 px-1 text-[10px] font-bold text-white">
             {unreadCount}
           </span>
         )}

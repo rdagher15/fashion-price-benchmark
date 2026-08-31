@@ -34,12 +34,12 @@ export default async function BuyerHome() {
       <TopBar title={`Hi, ${user!.firstName} 👋`} subtitle={profile.businessName} unreadCount={unreadCount} />
 
       <div className="space-y-5 px-4 py-4">
-        <Link href="/buyer/requirements/new" className="btn-primary block text-center">+ Post a Requirement</Link>
+        <Link href="/buyer/requests/new" className="btn-primary block text-center">+ Place New Request</Link>
 
         {deliveredAwaitingConfirm.length > 0 && (
           <section>
             <h2 className="mb-2 flex items-center gap-1.5 text-sm font-bold text-gray-800">
-              <span className="h-2 w-2 rounded-full bg-harvest-500" /> Confirm receipt
+              <span className="h-2 w-2 rounded-full bg-mustard-500" /> Confirm receipt
             </h2>
             <div className="space-y-2">
               {deliveredAwaitingConfirm.map((o) => (
@@ -57,12 +57,12 @@ export default async function BuyerHome() {
             <h2 className="mb-2 text-sm font-bold text-gray-800">Top matches for you</h2>
             <div className="space-y-2">
               {topMatches.map((m) => (
-                <Link key={m.id} href={`/buyer/search?listing=${m.listingId}`} className="card block">
+                <Link key={m.id} href={`/buyer/requests/${m.requirementId}`} className="card block">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold">{m.listing.farmerProfile.farmName}</p>
+                    <p className="text-sm font-semibold">{m.listing.produceCategory.name}</p>
                     <span className="text-xs font-bold text-brand-700">{Math.round(m.score)}% · {matchLabel(m.score)}</span>
                   </div>
-                  <p className="text-xs text-gray-500">{m.listing.produceCategory.name} · {m.listing.quantity} {m.listing.unit} available</p>
+                  <p className="text-xs text-gray-500">{m.listing.quantity} {m.listing.unit} available · {m.distanceKm != null ? `${m.distanceKm} km away` : ""}</p>
                 </Link>
               ))}
             </div>
@@ -72,7 +72,7 @@ export default async function BuyerHome() {
         <section>
           <h2 className="mb-2 text-sm font-bold text-gray-800">Summary</h2>
           <div className="grid grid-cols-2 gap-3">
-            <SummaryCard label="Active requirements" value={activeRequirements} href="/buyer/requirements" />
+            <SummaryCard label="Active requests" value={activeRequirements} href="/buyer/requests" />
             <SummaryCard label="Matching farmers" value={matchingFarmers} href="/buyer/search" />
             <SummaryCard label="Orders in progress" value={activeOrders.length} href="/buyer/orders" />
             <SummaryCard label="Deliveries today" value={deliveriesToday} href="/buyer/orders" />

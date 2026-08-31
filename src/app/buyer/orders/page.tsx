@@ -50,7 +50,7 @@ function OrderCard({ order }: { order: any }) {
         <BucketPill bucket={bucket} />
       </div>
       <p className="text-xs text-gray-500">{order.farmerProfile.farmName} · {order.quantity} {order.unit} · {formatMoney(order.totalValue)}</p>
-      <p className="text-xs font-medium text-harvest-600">{deliveryTimingLabel(order.deliveryDate)} · {order.status}</p>
+      <p className="text-xs font-medium text-mustard-600">{deliveryTimingLabel(order.deliveryDate)} · {order.status}</p>
     </Link>
   );
 }

@@ -8,13 +8,28 @@ import { DEFAULT_ORDER_CHECKLIST, LISTING_STATUS, ORDER_STATUS, OFFER_STATUS, RE
 export async function createOrderFromOffer(offerId: string) {
   const offer = await prisma.offer.findUnique({
     where: { id: offerId },
-    include: { listing: { include: { produceCategory: true } }, buyerProfile: { include: { user: true } }, farmerProfile: { include: { user: true } } },
+    include: {
+      listing: { include: { produceCategory: true } },
+      buyerProfile: { include: { user: true, deliveryLocations: true } },
+      farmerProfile: { include: { user: true } },
+    },
   });
   if (!offer) throw new Error("Offer not found");
 
+  // The retailer's exact identity/address is anonymized on the Offer (see
+  // retailerAnonymousLabel) and only disclosed to the farmer once the deal
+  // firms up into an Order — so the Order pulls the real address fresh from
+  // the buyer's profile rather than reusing the offer's anonymized fields.
+  const primaryLocation = offer.buyerProfile.deliveryLocations.find((l) => l.isPrimary) || offer.buyerProfile.deliveryLocations[0];
+  const deliveryLatitude = primaryLocation?.latitude ?? offer.buyerProfile.latitude;
+  const deliveryLongitude = primaryLocation?.longitude ?? offer.buyerProfile.longitude;
+  const deliveryAddress = primaryLocation?.address ?? [offer.buyerProfile.street, offer.buyerProfile.city, offer.buyerProfile.governorate].filter(Boolean).join(", ");
+
+  const orderCount = await prisma.order.count();
+
   const order = await prisma.order.create({
     data: {
-      orderNumber: generateOrderNumber(),
+      orderNumber: generateOrderNumber(orderCount + 1),
       offerId: offer.id,
       listingId: offer.listingId,
       requirementId: offer.requirementId,
@@ -28,9 +43,10 @@ export async function createOrderFromOffer(offerId: string) {
       totalValue: offer.quantity * offer.price,
       deliveryDate: offer.deliveryDate,
       deliveryMethod: offer.deliveryMethod,
-      deliveryLocationLabel: offer.deliveryLocationLabel,
-      deliveryLatitude: offer.deliveryLatitude,
-      deliveryLongitude: offer.deliveryLongitude,
+      deliveryLocationLabel: primaryLocation?.label ?? `${offer.buyerProfile.businessName} — main location`,
+      deliveryAddress,
+      deliveryLatitude,
+      deliveryLongitude,
       deliveryPersonType: offer.deliveryMethod === "farmer_delivery" ? "farmer" : offer.deliveryMethod === "buyer_pickup" ? "buyer_pickup" : "third_party",
       status: ORDER_STATUS.ACCEPTED,
       checklist: {

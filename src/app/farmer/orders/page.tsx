@@ -51,7 +51,7 @@ function OrderCard({ order, href, role }: { order: any; href: string; role: "FAR
         <BucketPill bucket={bucket} />
       </div>
       <p className="text-xs text-gray-500">{other} · {order.quantity} {order.unit} · {formatMoney(order.totalValue)}</p>
-      <p className="text-xs font-medium text-harvest-600">{deliveryTimingLabel(order.deliveryDate)} · {order.status}</p>
+      <p className="text-xs font-medium text-mustard-600">{deliveryTimingLabel(order.deliveryDate)} · {order.status}</p>
     </Link>
   );
 }

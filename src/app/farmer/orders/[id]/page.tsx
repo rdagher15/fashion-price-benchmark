@@ -6,6 +6,7 @@ import { StatusPill } from "@/components/StatusPill";
 import { formatDate, formatMoney, deliveryTimingLabel } from "@/lib/format";
 import FarmerOrderActions from "@/components/FarmerOrderActions";
 import ReviewForm from "@/components/ReviewForm";
+import { DISCREPANCY_TYPES, ORDER_STATUS } from "@/lib/constants";
 
 export default async function FarmerOrderDetail({ params }: { params: { id: string } }) {
   const user = await getCurrentUser();
@@ -24,7 +25,7 @@ export default async function FarmerOrderDetail({ params }: { params: { id: stri
       <div className="space-y-4 px-4 py-4">
         <div className="flex items-center justify-between">
           <StatusPill status={order.status} />
-          <span className="text-xs font-semibold text-harvest-600">{deliveryTimingLabel(order.deliveryDate)}</span>
+          <span className="text-xs font-semibold text-mustard-600">{deliveryTimingLabel(order.deliveryDate)}</span>
         </div>
 
         <div className="card space-y-1 text-sm">
@@ -51,6 +52,16 @@ export default async function FarmerOrderDetail({ params }: { params: { id: stri
           deliveryLng={order.deliveryLongitude}
           deliveryLabel={order.deliveryLocationLabel}
         />
+
+        {order.status === ORDER_STATUS.DISCREPANCY && (
+          <div className="card space-y-1 text-sm border-red-200 bg-red-50/50">
+            <p className="mb-1 text-xs font-semibold uppercase text-red-500">Buyer reported a discrepancy</p>
+            <p className="font-medium text-gray-800">
+              {(order.discrepancyTypesJson ? JSON.parse(order.discrepancyTypesJson) as string[] : []).map((t) => DISCREPANCY_TYPES.find((d) => d.value === t)?.label || t).join(", ")}
+            </p>
+            {order.discrepancyNote && <p className="text-gray-600">{order.discrepancyNote}</p>}
+          </div>
+        )}
 
         {order.status === "Completed" && order.receivedQuantity != null && (
           <div className="card space-y-1 text-sm">

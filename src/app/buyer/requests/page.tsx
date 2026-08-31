@@ -5,31 +5,30 @@ import TopBar from "@/components/TopBar";
 import { StatusPill } from "@/components/StatusPill";
 import { formatDate } from "@/lib/format";
 
-export default async function BuyerRequirementsPage() {
+export default async function BuyerRequestsPage() {
   const user = await getCurrentUser();
   const profile = user!.buyerProfile!;
 
   const requirements = await prisma.requirement.findMany({
     where: { buyerProfileId: profile.id },
-    include: { produceCategory: true, matches: true, offers: true },
+    include: { produceCategory: true, matches: true },
     orderBy: { createdAt: "desc" },
   });
 
   return (
     <div>
-      <TopBar title="My Requirements" />
+      <TopBar title="My Requests" />
       <div className="space-y-3 px-4 py-4">
-        <Link href="/buyer/requirements/new" className="btn-primary block text-center">+ Post a Requirement</Link>
+        <Link href="/buyer/requests/new" className="btn-primary block text-center">+ Place New Request</Link>
 
-        {requirements.length === 0 && <p className="pt-8 text-center text-sm text-gray-400">No requirements posted yet.</p>}
+        {requirements.length === 0 && <p className="pt-8 text-center text-sm text-gray-400">No requests placed yet.</p>}
 
         {requirements.map((r) => (
-          <Link key={r.id} href={`/buyer/requirements/${r.id}`} className="card block">
+          <Link key={r.id} href={`/buyer/requests/${r.id}`} className="card block">
             <div className="flex items-start justify-between">
               <div>
                 <p className="font-semibold text-gray-900">{r.produceCategory.name}</p>
                 <p className="text-xs text-gray-500">{r.quantity} {r.unit} · by {formatDate(r.requiredDate)}</p>
-                <p className="text-xs text-gray-500">→ {r.deliveryLocationLabel}</p>
               </div>
               <div className="flex flex-col items-end gap-1">
                 <StatusPill status={r.status} />

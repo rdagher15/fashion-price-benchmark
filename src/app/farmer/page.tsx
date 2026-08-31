@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import TopBar from "@/components/TopBar";
 import { formatDate, formatMoney, deliveryTimingLabel } from "@/lib/format";
 import { ORDER_STATUS } from "@/lib/constants";
+import { anonymizedBuyerLabel } from "@/lib/anonymize";
 
 export default async function FarmerHome() {
   const user = await getCurrentUser();
@@ -33,6 +34,10 @@ export default async function FarmerHome() {
 
   const activeOrders = orders.filter((o) => ![ORDER_STATUS.COMPLETED, ORDER_STATUS.CANCELLED].includes(o.status as any));
 
+  const anonymizedOffers = await Promise.all(
+    offers.slice(0, 3).map(async (offer) => ({ offer, buyerLabel: await anonymizedBuyerLabel(offer.buyerProfile) }))
+  );
+
   return (
     <div>
       <TopBar title={`Hi, ${user!.firstName} 👋`} subtitle={profile.farmName} unreadCount={unreadCount} />
@@ -56,14 +61,14 @@ export default async function FarmerHome() {
         {offers.length > 0 && (
           <section>
             <h2 className="mb-2 flex items-center gap-1.5 text-sm font-bold text-gray-800">
-              <span className="h-2 w-2 rounded-full bg-harvest-500" /> Action required — New offers
+              <span className="h-2 w-2 rounded-full bg-mustard-500" /> Action required — New offers
             </h2>
             <div className="space-y-2">
-              {offers.slice(0, 3).map((offer) => (
+              {anonymizedOffers.map(({ offer, buyerLabel }) => (
                 <Link key={offer.id} href={`/farmer/offers/${offer.id}`} className="card block">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold text-gray-900">{offer.buyerProfile.businessName}</p>
-                    <span className="text-xs font-bold text-harvest-600">{formatMoney(offer.price)}/{offer.priceUnit}</span>
+                    <p className="text-sm font-semibold text-gray-900">{buyerLabel}</p>
+                    <span className="text-xs font-bold text-mustard-600">{formatMoney(offer.price)}/{offer.priceUnit}</span>
                   </div>
                   <p className="text-xs text-gray-500">{offer.quantity} {offer.listing.unit} · {offer.listing.produceCategory.name} · Delivery {formatDate(offer.deliveryDate)}</p>
                 </Link>

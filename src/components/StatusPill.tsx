@@ -1,5 +1,5 @@
 const BUCKET_STYLES: Record<string, string> = {
-  needs_action: "bg-harvest-100 text-harvest-600",
+  needs_action: "bg-mustard-100 text-mustard-600",
   in_progress: "bg-blue-50 text-blue-600",
   awaiting_other: "bg-gray-100 text-gray-500",
   completed: "bg-brand-100 text-brand-700",

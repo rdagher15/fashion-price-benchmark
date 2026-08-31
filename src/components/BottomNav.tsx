@@ -14,8 +14,8 @@ const FARMER_ITEMS: Item[] = [
 
 const BUYER_ITEMS: Item[] = [
   { href: "/buyer", label: "Home", icon: "🏠" },
-  { href: "/buyer/search", label: "Search", icon: "🔎" },
-  { href: "/buyer/requirements", label: "Needs", icon: "📋" },
+  { href: "/buyer/search", label: "Find Produce", icon: "🔎" },
+  { href: "/buyer/requests", label: "Requests", icon: "📋" },
   { href: "/buyer/orders", label: "Orders", icon: "🚚" },
   { href: "/buyer/profile", label: "Profile", icon: "👤" },
 ];

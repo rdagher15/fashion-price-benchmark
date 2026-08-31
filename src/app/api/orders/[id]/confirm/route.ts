@@ -9,8 +9,18 @@ const schema = z.object({
   receivedQuantity: z.number().positive(),
   receivedCondition: z.enum(["good", "damaged", "partial"]),
   receivedNote: z.string().optional(),
+  quantityCorrect: z.boolean(),
+  qualityConfirmed: z.boolean(),
+  packagingConfirmed: z.boolean(),
+  deliveryAcceptable: z.boolean(),
+  signatureName: z.string().min(1),
+  signatureLatitude: z.number().optional(),
+  signatureLongitude: z.number().optional(),
 });
 
+// Digital delivery confirmation — a lightweight e-signature (typed name +
+// timestamp + optional GPS) rather than a full signature-pad, sufficient for
+// the MVP per the product spec.
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireRole("BUYER");
@@ -26,14 +36,23 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     const data = parsed.data;
 
+    const now = new Date();
     const updated = await prisma.order.update({
       where: { id: order.id },
       data: {
         status: ORDER_STATUS.COMPLETED,
-        confirmedAt: new Date(),
+        confirmedAt: now,
         receivedQuantity: data.receivedQuantity,
         receivedCondition: data.receivedCondition,
         receivedNote: data.receivedNote,
+        quantityCorrect: data.quantityCorrect,
+        qualityConfirmed: data.qualityConfirmed,
+        packagingConfirmed: data.packagingConfirmed,
+        deliveryAcceptable: data.deliveryAcceptable,
+        signatureName: data.signatureName,
+        signedAt: now,
+        signatureLatitude: data.signatureLatitude,
+        signatureLongitude: data.signatureLongitude,
       },
     });
 
@@ -44,7 +63,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     await prisma.farmerProfile.update({ where: { id: order.farmerProfileId }, data: { completedOrders: { increment: 1 } } });
     await prisma.buyerProfile.update({ where: { id: order.buyerProfileId }, data: { completedOrders: { increment: 1 } } });
 
-    await notify(order.farmerProfile.userId, "DELIVERY_CONFIRMED", "Delivery confirmed", `Order ${order.orderNumber} receipt confirmed by the buyer. Transaction completed.`, `/farmer/orders/${order.id}`);
+    await notify(order.farmerProfile.userId, "DELIVERY_CONFIRMED", "Delivery confirmed", `Order ${order.orderNumber} receipt confirmed and digitally signed by the buyer. Transaction completed.`, `/farmer/orders/${order.id}`);
 
     return NextResponse.json({ ok: true, order: updated });
   } catch (e) {

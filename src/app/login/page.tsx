@@ -56,10 +56,11 @@ export default function LoginPage() {
           Create an account
         </Link>
       </p>
-      <div className="mt-8 rounded-xl bg-gray-50 p-3 text-xs text-gray-500">
-        <p className="mb-1 font-semibold text-gray-600">Demo accounts (password: demo1234)</p>
-        <p>Farmer: farmer1@harvestlink.demo</p>
-        <p>Buyer: buyer1@harvestlink.demo</p>
+      <div className="mt-8 rounded-xl bg-cream-100 p-3 text-xs text-brown-600">
+        <p className="mb-1 font-semibold text-brown-700">Demo accounts (password: demo1234)</p>
+        <p>Farmer (Chouf Terraces Farm, near Beirut): farmer3@harvestlink.demo</p>
+        <p>Farmer (Bekaa Valley Farms, clustering demo): farmer1@harvestlink.demo</p>
+        <p>Buyer (Beirut Bistro): buyer1@harvestlink.demo</p>
         <p>Admin: admin@harvestlink.demo</p>
       </div>
     </main>

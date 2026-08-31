@@ -58,7 +58,7 @@ export default async function BuyerSearchPage({ searchParams }: { searchParams: 
               <p className="text-sm font-semibold text-brand-700">{formatMoney(l.minPrice)}{l.maxPrice ? `–${formatMoney(l.maxPrice)}` : ""}/{l.priceUnit}</p>
               <p className="text-xs text-gray-500">Available {formatDate(l.availableFrom)}–{formatDate(l.availableUntil)}</p>
               {methods.includes("farmer_delivery") && <p className="text-xs text-brand-600">🚚 Farmer delivery available</p>}
-              <Link href={`/buyer/offers/new?listingId=${l.id}`} className="btn-secondary mt-2 block text-center !py-2">View & Make an Offer</Link>
+              <Link href={`/buyer/requests/new?produce=${l.produceCategoryId}`} className="btn-secondary mt-2 block text-center !py-2">Request This Produce</Link>
             </div>
           );
         })}

@@ -15,71 +15,72 @@ datasource db {
 // ---------- Users & Auth ----------
 
 model User {
-  id           String   @id @default(cuid())
-  role         String // FARMER | BUYER | ADMIN
-  status       String   @default("ACTIVE") // ACTIVE | PENDING | SUSPENDED
-  firstName    String
-  lastName     String
-  email        String   @unique
-  phone        String
-  passwordHash String
-  nationality  String?
-  idInfo       String?
-  preferredLanguage String @default("en")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                String   @id @default(cuid())
+  role              String // FARMER | BUYER | ADMIN
+  status            String   @default("ACTIVE") // ACTIVE | PENDING | SUSPENDED
+  firstName         String
+  lastName          String
+  email             String   @unique
+  phone             String
+  passwordHash      String
+  nationality       String?
+  idInfo            String?
+  position          String? // retailer operator's role in the business: Owner, GM, Procurement Manager, ...
+  preferredLanguage String   @default("en")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  farmerProfile FarmerProfile?
-  buyerProfile  BuyerProfile?
-  notifications Notification[]
-  reviewsGiven  Review[] @relation("ReviewsGiven")
-  reviewsReceived Review[] @relation("ReviewsReceived")
+  farmerProfile   FarmerProfile?
+  buyerProfile    BuyerProfile?
+  notifications   Notification[]
+  reviewsGiven    Review[]       @relation("ReviewsGiven")
+  reviewsReceived Review[]       @relation("ReviewsReceived")
 }
 
 // ---------- Farmer side ----------
 
 model FarmerProfile {
-  id        String @id @default(cuid())
-  userId    String @unique
-  user      User   @relation(fields: [userId], references: [id])
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
 
-  farmName        String
-  region          String
-  city            String
-  latitude        Float?
-  longitude       Float?
-  farmSizeValue   Float?
-  farmSizeUnit    String? // hectares, acres, dunums
-  farmType        String? // family/commercial/cooperative etc
-  yearsOperating  Int?
-  numWorkers      Int?
+  farmName       String
+  region         String
+  city           String
+  latitude       Float?
+  longitude      Float?
+  farmSizeValue  Float?
+  farmSizeUnit   String? // hectares, acres, dunums
+  farmType       String? // family/commercial/cooperative etc
+  yearsOperating Int?
+  numWorkers     Int?
 
-  hasOwnVehicle   Boolean @default(false)
-  vehicleType     String?
-  vehicleCapacity String?
-  refrigerated    Boolean @default(false)
+  hasOwnVehicle    Boolean @default(false)
+  vehicleType      String?
+  vehicleCapacity  String?
+  refrigerated     Boolean @default(false)
   deliveryRadiusKm Float?
-  canDeliver      Boolean @default(false)
-  allowPickup     Boolean @default(true)
-  sharedDelivery  Boolean @default(false)
-  altDeliveryNote String?
+  canDeliver       Boolean @default(false)
+  allowPickup      Boolean @default(true)
+  sharedDelivery   Boolean @default(false)
+  altDeliveryNote  String?
 
-  supportTypesJson String @default("[]") // JSON array: government/ngo/cooperative/private/other
+  supportTypesJson   String  @default("[]") // JSON array: government/ngo/cooperative/private/other
   supportDescription String?
 
-  usesPesticides  Boolean?
-  usesFertilizers Boolean?
-  organic         Boolean @default(false)
-  conventional    Boolean @default(true)
-  farmingNotes    String?
-  certificationsJson String @default("[]") // JSON array of {name, docUrl}
+  usesPesticides     Boolean?
+  usesFertilizers    Boolean?
+  organic            Boolean  @default(false)
+  conventional       Boolean  @default(true)
+  farmingNotes       String?
+  certificationsJson String   @default("[]") // JSON array of {name, docUrl}
 
-  verificationStatus String @default("PENDING") // PENDING | VERIFIED | REJECTED
-  profileCompletionPct Int @default(20)
+  verificationStatus   String @default("PENDING") // PENDING | VERIFIED | REJECTED
+  profileCompletionPct Int    @default(20)
 
-  ratingAvg       Float @default(0)
-  ratingCount     Int   @default(0)
-  completedOrders Int   @default(0)
+  ratingAvg          Float @default(0)
+  ratingCount        Int   @default(0)
+  completedOrders    Int   @default(0)
   onTimeDeliveryRate Float @default(0)
 
   createdAt DateTime @default(now())
@@ -93,30 +94,30 @@ model FarmerProfile {
 }
 
 model FarmPhoto {
-  id              String @id @default(cuid())
+  id              String        @id @default(cuid())
   farmerProfileId String
   farmerProfile   FarmerProfile @relation(fields: [farmerProfileId], references: [id])
   url             String
   category        String // overview | fields | storage | equipment | other
   caption         String?
-  createdAt       DateTime @default(now())
+  createdAt       DateTime      @default(now())
 }
 
 // What a farmer typically produces (capability, distinct from a specific listing)
 model FarmerProduce {
-  id                String @id @default(cuid())
+  id                String          @id @default(cuid())
   farmerProfileId   String
-  farmerProfile     FarmerProfile @relation(fields: [farmerProfileId], references: [id])
+  farmerProfile     FarmerProfile   @relation(fields: [farmerProfileId], references: [id])
   produceCategoryId String
   produceCategory   ProduceCategory @relation(fields: [produceCategoryId], references: [id])
 
-  typicalQuantity   Float?
-  unit              String?
+  typicalQuantity     Float?
+  unit                String?
   productionFrequency String? // daily/weekly/seasonal/one-off
-  productionSeason   String?
-  availabilityStart DateTime?
-  availabilityEnd   DateTime?
-  nextAvailability  DateTime?
+  productionSeason    String?
+  availabilityStart   DateTime?
+  availabilityEnd     DateTime?
+  nextAvailability    DateTime?
 
   createdAt DateTime @default(now())
 }
@@ -128,17 +129,29 @@ model BuyerProfile {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])
 
-  businessName       String
-  buyerType          String // supermarket|grocery|restaurant|hotel|hospital|school|catering|other
-  contactPerson      String?
+  businessName             String
+  buyerType                String // sourced from BusinessType.value — supermarket|grocery|restaurant|hotel|...
+  contactPerson            String?
   businessRegistrationInfo String?
-  region             String
-  city               String
-  latitude           Float?
-  longitude          Float?
 
-  verificationStatus String @default("PENDING")
-  profileCompletionPct Int @default(30)
+  // Commercial Registration
+  crNumber      String?
+  crDocumentUrl String?
+
+  // Lebanon location hierarchy — exact coordinates drive matching/logistics,
+  // the written address is for display only.
+  governorate String
+  caza        String?
+  city        String
+  street      String?
+  latitude    Float?
+  longitude   Float?
+
+  businessPhone String?
+  businessEmail String?
+
+  verificationStatus   String @default("PENDING")
+  profileCompletionPct Int    @default(30)
 
   ratingAvg       Float @default(0)
   ratingCount     Int   @default(0)
@@ -148,36 +161,75 @@ model BuyerProfile {
   updatedAt DateTime @updatedAt
 
   deliveryLocations BuyerDeliveryLocation[]
+  demandProfile     RetailerDemandProfile[]
+  photos            BuyerPhoto[]
   requirements      Requirement[]
   offers            Offer[]
   orders            Order[]
 }
 
+model BuyerPhoto {
+  id             String       @id @default(cuid())
+  buyerProfileId String
+  buyerProfile   BuyerProfile @relation(fields: [buyerProfileId], references: [id])
+  url            String
+  category       String // storefront | entrance | warehouse | receiving_area | other
+  caption        String?
+  createdAt      DateTime     @default(now())
+}
+
+// Recurring/typical purchasing pattern captured at registration — informs
+// planning and matching, but is never itself an order.
+model RetailerDemandProfile {
+  id                String          @id @default(cuid())
+  buyerProfileId    String
+  buyerProfile      BuyerProfile    @relation(fields: [buyerProfileId], references: [id])
+  produceCategoryId String
+  produceCategory   ProduceCategory @relation(fields: [produceCategoryId], references: [id])
+
+  typicalQuantity Float
+  unit            String @default("kg")
+  frequency       String // daily|2-3x_week|weekly|biweekly|monthly|seasonal
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Database-driven retailer business types (admin-extensible).
+model BusinessType {
+  id        String   @id @default(cuid())
+  value     String   @unique
+  label     String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
 model BuyerDeliveryLocation {
-  id             String @id @default(cuid())
+  id             String       @id @default(cuid())
   buyerProfileId String
   buyerProfile   BuyerProfile @relation(fields: [buyerProfileId], references: [id])
   label          String
   address        String
   latitude       Float?
   longitude      Float?
-  isPrimary      Boolean @default(false)
+  isPrimary      Boolean      @default(false)
 }
 
 // ---------- Produce taxonomy (admin-managed, extensible) ----------
 
 model ProduceCategory {
-  id           String @id @default(cuid())
-  family       String // Vegetables | Fruits | Herbs | Leafy Greens | Root Vegetables | Other
-  name         String // Tomatoes, Cucumbers, ...
-  variety      String?
-  defaultUnit  String @default("kg")
-  active       Boolean @default(true)
-  createdAt    DateTime @default(now())
+  id          String   @id @default(cuid())
+  family      String // Vegetables | Fruits | Herbs | Leafy Greens | Root Vegetables | Other
+  name        String // Tomatoes, Cucumbers, ...
+  variety     String?
+  defaultUnit String   @default("kg")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
 
-  farmerProduce FarmerProduce[]
-  listings      Listing[]
-  requirements  Requirement[]
+  farmerProduce  FarmerProduce[]
+  listings       Listing[]
+  requirements   Requirement[]
+  demandProfiles RetailerDemandProfile[]
 
   @@unique([family, name, variety])
 }
@@ -185,27 +237,27 @@ model ProduceCategory {
 // ---------- Listings (supply) ----------
 
 model Listing {
-  id                String @id @default(cuid())
+  id                String          @id @default(cuid())
   farmerProfileId   String
-  farmerProfile     FarmerProfile @relation(fields: [farmerProfileId], references: [id])
+  farmerProfile     FarmerProfile   @relation(fields: [farmerProfileId], references: [id])
   produceCategoryId String
   produceCategory   ProduceCategory @relation(fields: [produceCategoryId], references: [id])
 
-  variety   String?
-  photoUrl  String?
+  variety  String?
+  photoUrl String?
 
-  quantity          Float
-  unit              String
-  minOrderQuantity  Float?
+  quantity         Float
+  unit             String
+  minOrderQuantity Float?
 
-  availableFrom DateTime
+  availableFrom  DateTime
   availableUntil DateTime
-  readyDate     DateTime?
+  readyDate      DateTime?
 
   grade             String?
   sizeSpec          String?
   qualityLevel      String?
-  productionMethod  String @default("conventional") // organic | conventional
+  productionMethod  String  @default("conventional") // organic | conventional
   certificationNote String?
 
   packagingType   String? // loose|box|crate|bag|carton|other
@@ -213,8 +265,8 @@ model Listing {
   packageWeight   Float?
 
   deliveryMethodsJson String @default("[\"buyer_pickup\"]") // farmer_delivery|buyer_pickup|third_party|other
-  deliveryRadiusKm Float?
-  deliveryCost     Float?
+  deliveryRadiusKm    Float?
+  deliveryCost        Float?
 
   minPrice       Float
   preferredPrice Float?
@@ -228,17 +280,17 @@ model Listing {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  matches  Match[]
-  offers   Offer[]
-  orders   Order[]
+  matches Match[]
+  offers  Offer[]
+  orders  Order[]
 }
 
 // ---------- Requirements (demand) ----------
 
 model Requirement {
-  id                String @id @default(cuid())
+  id                String          @id @default(cuid())
   buyerProfileId    String
-  buyerProfile      BuyerProfile @relation(fields: [buyerProfileId], references: [id])
+  buyerProfile      BuyerProfile    @relation(fields: [buyerProfileId], references: [id])
   produceCategoryId String
   produceCategory   ProduceCategory @relation(fields: [produceCategoryId], references: [id])
 
@@ -248,7 +300,9 @@ model Requirement {
   unit        String @default("kg")
 
   requiredDate       DateTime
-  recurring          Boolean @default(false)
+  dateMin            DateTime? // acceptable delivery window, e.g. requiredDate ± N days
+  dateMax            DateTime?
+  recurring          Boolean   @default(false)
   recurringFrequency String?
 
   deliveryLocationLabel String
@@ -264,6 +318,10 @@ model Requirement {
   maxPrice  Float?
   priceUnit String @default("kg")
 
+  // Anonymous to farmers until the request converts into an Order — see
+  // retailerAnonymousLabel() in lib/constants.ts.
+  anonymous Boolean @default(true)
+
   status String @default("ACTIVE") // Active|Matched|Offer Sent|Fulfilled|Cancelled|Expired
 
   createdAt DateTime @default(now())
@@ -277,32 +335,41 @@ model Requirement {
 // ---------- Matching engine output ----------
 
 model MatchingConfig {
-  id               String @id @default("singleton")
-  weightProduce    Float @default(30)
-  weightQuantity   Float @default(20)
-  weightDate       Float @default(20)
-  weightGeo        Float @default(15)
-  weightDelivery   Float @default(10)
-  weightPrice      Float @default(5)
-  maxDistanceKm    Float @default(300)
-  updatedAt        DateTime @updatedAt
+  id             String   @id @default("singleton")
+  // Defaults per the Lebanon matching spec — distance is weighted heavily
+  // since geography drives delivery feasibility in this market.
+  weightProduce  Float    @default(25)
+  weightQuantity Float    @default(15)
+  weightDate     Float    @default(15)
+  weightGeo      Float    @default(20)
+  weightDelivery Float    @default(10)
+  weightPrice    Float    @default(15)
+  maxDistanceKm  Float    @default(150)
+  updatedAt      DateTime @updatedAt
 }
 
 model Match {
-  id            String @id @default(cuid())
+  id            String      @id @default(cuid())
   listingId     String
-  listing       Listing @relation(fields: [listingId], references: [id])
+  listing       Listing     @relation(fields: [listingId], references: [id])
   requirementId String
   requirement   Requirement @relation(fields: [requirementId], references: [id])
 
-  score          Float
-  produceScore   Float
-  quantityScore  Float
-  dateScore      Float
-  geoScore       Float
-  deliveryScore  Float
-  priceScore     Float
-  distanceKm     Float?
+  score         Float
+  produceScore  Float
+  quantityScore Float
+  dateScore     Float
+  geoScore      Float
+  deliveryScore Float
+  priceScore    Float
+  distanceKm    Float?
+
+  // Consolidated fulfillment (quantity+geo clustering) — see lib/clustering.ts.
+  // Matches sharing a clusterId are a recommended group of nearby requests
+  // that together absorb a farmer's listing.
+  clusterId                String?
+  clusterScore             Float?
+  quantityUtilizationScore Float?
 
   status String @default("SUGGESTED") // SUGGESTED|VIEWED|OFFERED|DISMISSED
 
@@ -314,14 +381,14 @@ model Match {
 // ---------- Offers & Negotiation ----------
 
 model Offer {
-  id            String @id @default(cuid())
+  id            String       @id @default(cuid())
   listingId     String
-  listing       Listing @relation(fields: [listingId], references: [id])
+  listing       Listing      @relation(fields: [listingId], references: [id])
   requirementId String?
   requirement   Requirement? @relation(fields: [requirementId], references: [id])
 
   buyerProfileId  String
-  buyerProfile    BuyerProfile @relation(fields: [buyerProfileId], references: [id])
+  buyerProfile    BuyerProfile  @relation(fields: [buyerProfileId], references: [id])
   farmerProfileId String
   farmerProfile   FarmerProfile @relation(fields: [farmerProfileId], references: [id])
 
@@ -330,12 +397,12 @@ model Offer {
   priceUnit String @default("kg")
 
   deliveryDate          DateTime
-  deliveryMethod         String // farmer_delivery|buyer_pickup|third_party|other
-  deliveryLocationLabel  String?
-  deliveryLatitude       Float?
-  deliveryLongitude      Float?
-  packagingNote          String?
-  message                String?
+  deliveryMethod        String // farmer_delivery|buyer_pickup|third_party|other
+  deliveryLocationLabel String?
+  deliveryLatitude      Float?
+  deliveryLongitude     Float?
+  packagingNote         String?
+  message               String?
 
   initiatedBy String @default("BUYER") // BUYER | FARMER
   status      String @default("PENDING") // PENDING|COUNTERED|ACCEPTED|REJECTED|CANCELLED|EXPIRED
@@ -348,9 +415,9 @@ model Offer {
 }
 
 model Negotiation {
-  id        String @id @default(cuid())
+  id        String   @id @default(cuid())
   offerId   String
-  offer     Offer  @relation(fields: [offerId], references: [id])
+  offer     Offer    @relation(fields: [offerId], references: [id])
   sender    String // BUYER | FARMER
   price     Float
   quantity  Float
@@ -367,36 +434,37 @@ model Order {
   offer       Offer  @relation(fields: [offerId], references: [id])
 
   listingId     String
-  listing       Listing @relation(fields: [listingId], references: [id])
+  listing       Listing      @relation(fields: [listingId], references: [id])
   requirementId String?
   requirement   Requirement? @relation(fields: [requirementId], references: [id])
 
   buyerProfileId  String
-  buyerProfile    BuyerProfile @relation(fields: [buyerProfileId], references: [id])
+  buyerProfile    BuyerProfile  @relation(fields: [buyerProfileId], references: [id])
   farmerProfileId String
   farmerProfile   FarmerProfile @relation(fields: [farmerProfileId], references: [id])
 
   produceLabel String // denormalized for quick display
 
-  quantity     Float
-  unit         String
-  agreedPrice  Float
-  priceUnit    String
-  totalValue   Float
+  quantity    Float
+  unit        String
+  agreedPrice Float
+  priceUnit   String
+  totalValue  Float
 
   deliveryDate          DateTime
-  deliveryMethod         String
-  deliveryLocationLabel  String?
-  deliveryAddress        String?
-  deliveryLatitude       Float?
-  deliveryLongitude      Float?
+  deliveryMethod        String
+  deliveryLocationLabel String?
+  deliveryAddress       String?
+  deliveryLatitude      Float?
+  deliveryLongitude     Float?
 
   deliveryPersonType String? // farmer | other_farmer | driver | third_party | buyer_pickup
   deliveryPersonName String?
   deliveryContact    String?
 
   status String @default("ACCEPTED")
-  // Accepted|Preparing|Ready|Out for Delivery|Delivered|Confirmed|Completed|Cancelled
+  // Accepted|Preparing|Ready|Out for Delivery|Delivered|Confirmed|Completed|
+  // Discrepancy Reported|Cancelled
 
   dispatchedAt DateTime?
   deliveredAt  DateTime?
@@ -405,6 +473,24 @@ model Order {
   receivedCondition String? // good|damaged|partial
   receivedNote      String?
   confirmedAt       DateTime?
+
+  // Receiving / quality-control checklist against the original request
+  quantityCorrect    Boolean?
+  qualityConfirmed   Boolean?
+  packagingConfirmed Boolean?
+  deliveryAcceptable Boolean?
+
+  // Digital delivery confirmation (lightweight e-signature for the MVP)
+  signatureName      String?
+  signedAt           DateTime?
+  signatureLatitude  Float?
+  signatureLongitude Float?
+
+  // Discrepancy report, when the retailer rejects the delivery as received
+  discrepancyTypesJson  String? // JSON array: shortage|quality|wrong_produce|damaged|packaging|late|other
+  discrepancyNote       String?
+  discrepancyPhotosJson String    @default("[]")
+  discrepancyReportedAt DateTime?
 
   cancelReason String?
 
@@ -416,38 +502,38 @@ model Order {
 }
 
 model OrderChecklistItem {
-  id          String @id @default(cuid())
+  id          String    @id @default(cuid())
   orderId     String
-  order       Order  @relation(fields: [orderId], references: [id])
+  order       Order     @relation(fields: [orderId], references: [id])
   task        String
-  completed   Boolean @default(false)
+  completed   Boolean   @default(false)
   completedAt DateTime?
-  sortOrder   Int @default(0)
+  sortOrder   Int       @default(0)
 }
 
 // ---------- Trust & Notifications ----------
 
 model Review {
-  id              String @id @default(cuid())
+  id              String   @id @default(cuid())
   orderId         String
-  order           Order  @relation(fields: [orderId], references: [id])
+  order           Order    @relation(fields: [orderId], references: [id])
   reviewerId      String
-  reviewer        User   @relation("ReviewsGiven", fields: [reviewerId], references: [id])
+  reviewer        User     @relation("ReviewsGiven", fields: [reviewerId], references: [id])
   reviewedPartyId String
-  reviewedParty   User   @relation("ReviewsReceived", fields: [reviewedPartyId], references: [id])
+  reviewedParty   User     @relation("ReviewsReceived", fields: [reviewedPartyId], references: [id])
   rating          Int
   comment         String?
   createdAt       DateTime @default(now())
 }
 
 model Notification {
-  id        String @id @default(cuid())
+  id        String   @id @default(cuid())
   userId    String
-  user      User   @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
   type      String
   title     String
   body      String
   link      String?
-  read      Boolean @default(false)
+  read      Boolean  @default(false)
   createdAt DateTime @default(now())
 }

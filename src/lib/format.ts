@@ -3,8 +3,9 @@ export function formatDate(d: Date | string) {
   return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
 
-export function formatMoney(amount: number, currency = "SAR") {
-  return `${currency} ${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+// Lebanon commonly quotes produce trade in USD.
+export function formatMoney(amount: number, currency = "$") {
+  return `${currency}${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export function daysUntil(d: Date | string) {
@@ -22,8 +23,7 @@ export function deliveryTimingLabel(deliveryDate: Date | string) {
   return `Delivery in ${diff} days`;
 }
 
-export function generateOrderNumber() {
-  const ts = Date.now().toString(36).toUpperCase();
-  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
-  return `HL-${ts}-${rand}`;
+// e.g. "LEB-000123" — seq is typically (current order count + 1).
+export function generateOrderNumber(seq: number) {
+  return `LEB-${String(seq).padStart(6, "0")}`;
 }

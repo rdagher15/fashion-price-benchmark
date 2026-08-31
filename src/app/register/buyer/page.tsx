@@ -1,10 +1,14 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { BUYER_TYPES } from "@/lib/constants";
+import { LEBANON_GOVERNORATES, LEBANON_CITIES, OPERATOR_POSITIONS, DEMAND_FREQUENCIES } from "@/lib/constants";
 
-const STEPS = ["Account", "Business", "Delivery"];
+type Category = { id: string; family: string; name: string };
+type BusinessType = { value: string; label: string };
+type DemandRow = { produceCategoryId: string; typicalQuantity: string; unit: string; frequency: string };
+
+const STEPS = ["Operator", "Business", "Location", "Demand", "Review"];
 
 export default function BuyerRegisterPage() {
   const router = useRouter();
@@ -12,16 +16,33 @@ export default function BuyerRegisterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [locating, setLocating] = useState(false);
+  const [uploadingCr, setUploadingCr] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
 
   const [form, setForm] = useState({
-    firstName: "", lastName: "", mobile: "", email: "", password: "",
-    businessName: "", buyerType: "restaurant", contactPerson: "", businessRegistrationInfo: "",
-    region: "", city: "", latitude: "", longitude: "",
-    deliveryLabel: "Main location", deliveryAddress: "",
+    firstName: "", lastName: "", mobile: "", email: "", password: "", position: OPERATOR_POSITIONS[0],
+    businessName: "", crNumber: "", crDocumentUrl: "", buyerType: "restaurant", businessPhone: "", businessEmail: "",
+    governorate: Object.keys(LEBANON_GOVERNORATES)[0], caza: "", city: "", street: "",
+    latitude: "", longitude: "", businessPhotoUrl: "",
   });
+  const [demand, setDemand] = useState<DemandRow[]>([{ produceCategoryId: "", typicalQuantity: "", unit: "kg", frequency: "weekly" }]);
+
+  useEffect(() => {
+    fetch("/api/categories").then((r) => r.json()).then((d) => setCategories(d.categories || []));
+    fetch("/api/business-types").then((r) => r.json()).then((d) => setBusinessTypes(d.types || []));
+  }, []);
 
   function set<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  const cazaOptions = LEBANON_GOVERNORATES[form.governorate] || [];
+  const cityQuickPicks = LEBANON_CITIES.filter((c) => c.governorate === form.governorate);
+
+  function pickCity(c: (typeof LEBANON_CITIES)[number]) {
+    setForm((f) => ({ ...f, caza: c.caza, city: c.name, latitude: String(c.lat), longitude: String(c.lng) }));
   }
 
   function useMyLocation() {
@@ -37,13 +58,52 @@ export default function BuyerRegisterPage() {
     );
   }
 
+  async function uploadFile(file: File, publicOnly: boolean): Promise<string | null> {
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch(publicOnly ? "/api/upload/public" : "/api/upload", { method: "POST", body: fd });
+    const data = await res.json();
+    return res.ok ? data.url : null;
+  }
+
+  async function handleCrUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingCr(true);
+    const url = await uploadFile(file, true);
+    if (url) set("crDocumentUrl", url);
+    setUploadingCr(false);
+  }
+
+  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingPhoto(true);
+    const url = await uploadFile(file, true);
+    if (url) set("businessPhotoUrl", url);
+    setUploadingPhoto(false);
+  }
+
+  function addDemandRow() {
+    setDemand((d) => [...d, { produceCategoryId: "", typicalQuantity: "", unit: "kg", frequency: "weekly" }]);
+  }
+  function updateDemandRow(i: number, patch: Partial<DemandRow>) {
+    setDemand((d) => d.map((row, idx) => (idx === i ? { ...row, ...patch } : row)));
+  }
+  function removeDemandRow(i: number) {
+    setDemand((d) => d.filter((_, idx) => idx !== i));
+  }
+
   function validateStep(): string | null {
     if (step === 0) {
       if (!form.firstName || !form.lastName || !form.mobile || !form.email || form.password.length < 6)
         return "Please fill in all required fields (password ≥ 6 characters).";
     }
     if (step === 1) {
-      if (!form.businessName || !form.region || !form.city) return "Please fill in your business name, region and city.";
+      if (!form.businessName || !form.buyerType) return "Please fill in your business name and type.";
+    }
+    if (step === 2) {
+      if (!form.governorate || !form.city) return "Please select your governorate and city.";
     }
     return null;
   }
@@ -66,15 +126,9 @@ export default function BuyerRegisterPage() {
       ...form,
       latitude: form.latitude ? Number(form.latitude) : undefined,
       longitude: form.longitude ? Number(form.longitude) : undefined,
-      deliveryLocations: [
-        {
-          label: form.deliveryLabel || "Main location",
-          address: form.deliveryAddress || `${form.city}, ${form.region}`,
-          latitude: form.latitude ? Number(form.latitude) : undefined,
-          longitude: form.longitude ? Number(form.longitude) : undefined,
-          isPrimary: true,
-        },
-      ],
+      demandProfile: demand
+        .filter((d) => d.produceCategoryId && d.typicalQuantity)
+        .map((d) => ({ produceCategoryId: d.produceCategoryId, typicalQuantity: Number(d.typicalQuantity), unit: d.unit, frequency: d.frequency })),
     };
     const res = await fetch("/api/auth/register/buyer", {
       method: "POST",
@@ -91,11 +145,16 @@ export default function BuyerRegisterPage() {
     router.refresh();
   }
 
+  const grouped = categories.reduce<Record<string, Category[]>>((acc, c) => {
+    (acc[c.family] ||= []).push(c);
+    return acc;
+  }, {});
+
   return (
     <main className="flex min-h-dvh flex-col px-6 py-6">
       <div className="mb-4 flex items-center gap-2">
         <Link href="/" className="text-lg text-gray-500">←</Link>
-        <span className="text-sm font-semibold text-gray-500">Buyer registration</span>
+        <span className="text-sm font-semibold text-gray-500">Retailer registration</span>
       </div>
 
       <div className="mb-6">
@@ -112,7 +171,8 @@ export default function BuyerRegisterPage() {
       <div className="flex-1 space-y-4">
         {step === 0 && (
           <>
-            <h2 className="text-lg font-bold">Create your account</h2>
+            <h2 className="text-lg font-bold">About you</h2>
+            <p className="text-sm text-gray-500">First, register yourself as the operator. You'll add your business next.</p>
             <div className="grid grid-cols-2 gap-3">
               <div><label className="label">First name</label><input className="input-field" value={form.firstName} onChange={(e) => set("firstName", e.target.value)} /></div>
               <div><label className="label">Last name</label><input className="input-field" value={form.lastName} onChange={(e) => set("lastName", e.target.value)} /></div>
@@ -120,35 +180,73 @@ export default function BuyerRegisterPage() {
             <div><label className="label">Mobile number</label><input className="input-field" value={form.mobile} onChange={(e) => set("mobile", e.target.value)} /></div>
             <div><label className="label">Email</label><input className="input-field" type="email" value={form.email} onChange={(e) => set("email", e.target.value)} /></div>
             <div><label className="label">Password</label><input className="input-field" type="password" value={form.password} onChange={(e) => set("password", e.target.value)} /></div>
+            <div>
+              <label className="label">Your position / role</label>
+              <select className="input-field" value={form.position} onChange={(e) => set("position", e.target.value)}>
+                {OPERATOR_POSITIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </div>
           </>
         )}
 
         {step === 1 && (
           <>
             <h2 className="text-lg font-bold">Your business</h2>
-            <div><label className="label">Business name</label><input className="input-field" value={form.businessName} onChange={(e) => set("businessName", e.target.value)} /></div>
+            <div><label className="label">Business / company name</label><input className="input-field" value={form.businessName} onChange={(e) => set("businessName", e.target.value)} /></div>
             <div>
-              <label className="label">Buyer type</label>
+              <label className="label">Business type</label>
               <select className="input-field" value={form.buyerType} onChange={(e) => set("buyerType", e.target.value)}>
-                {BUYER_TYPES.map((b) => <option key={b.value} value={b.value}>{b.label}</option>)}
+                {businessTypes.map((b) => <option key={b.value} value={b.value}>{b.label}</option>)}
               </select>
             </div>
-            <div><label className="label">Contact person</label><input className="input-field" value={form.contactPerson} onChange={(e) => set("contactPerson", e.target.value)} /></div>
-            <div><label className="label">Business registration info (optional)</label><input className="input-field" value={form.businessRegistrationInfo} onChange={(e) => set("businessRegistrationInfo", e.target.value)} /></div>
+            <div><label className="label">Commercial Registration (CR) number</label><input className="input-field" value={form.crNumber} onChange={(e) => set("crNumber", e.target.value)} /></div>
+            <div>
+              <label className="label">Upload CR document</label>
+              <input type="file" accept="image/*,application/pdf" onChange={handleCrUpload} className="text-sm" />
+              {uploadingCr && <p className="text-xs text-gray-400">Uploading…</p>}
+              {form.crDocumentUrl && <p className="text-xs text-brand-700">✓ Document uploaded</p>}
+            </div>
             <div className="grid grid-cols-2 gap-3">
-              <div><label className="label">Region</label><input className="input-field" value={form.region} onChange={(e) => set("region", e.target.value)} /></div>
-              <div><label className="label">City</label><input className="input-field" value={form.city} onChange={(e) => set("city", e.target.value)} /></div>
+              <div><label className="label">Business phone</label><input className="input-field" value={form.businessPhone} onChange={(e) => set("businessPhone", e.target.value)} /></div>
+              <div><label className="label">Business email</label><input className="input-field" value={form.businessEmail} onChange={(e) => set("businessEmail", e.target.value)} /></div>
             </div>
           </>
         )}
 
         {step === 2 && (
           <>
-            <h2 className="text-lg font-bold">Primary delivery location</h2>
-            <div><label className="label">Label</label><input className="input-field" value={form.deliveryLabel} onChange={(e) => set("deliveryLabel", e.target.value)} /></div>
-            <div><label className="label">Address</label><input className="input-field" value={form.deliveryAddress} onChange={(e) => set("deliveryAddress", e.target.value)} placeholder="Street, city" /></div>
+            <h2 className="text-lg font-bold">Business location</h2>
+            <p className="text-sm text-gray-500">Exact coordinates drive matching &amp; delivery — please pin your precise location.</p>
             <div>
-              <label className="label">Coordinates (pin on map)</label>
+              <label className="label">Governorate</label>
+              <select className="input-field" value={form.governorate} onChange={(e) => setForm((f) => ({ ...f, governorate: e.target.value, caza: "" }))}>
+                {Object.keys(LEBANON_GOVERNORATES).map((g) => <option key={g} value={g}>{g}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="label">Caza / District</label>
+              <select className="input-field" value={form.caza} onChange={(e) => set("caza", e.target.value)}>
+                <option value="">Select…</option>
+                {cazaOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            {cityQuickPicks.length > 0 && (
+              <div>
+                <label className="label">Quick-select a city (autofills coordinates)</label>
+                <div className="flex flex-wrap gap-2">
+                  {cityQuickPicks.map((c) => (
+                    <button type="button" key={c.name} onClick={() => pickCity(c)}
+                      className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${form.city === c.name ? "border-brand-600 bg-brand-50 text-brand-700" : "border-gray-200 text-gray-500"}`}>
+                      {c.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div><label className="label">City / Municipality</label><input className="input-field" value={form.city} onChange={(e) => set("city", e.target.value)} /></div>
+            <div><label className="label">Street</label><input className="input-field" value={form.street} onChange={(e) => set("street", e.target.value)} /></div>
+            <div>
+              <label className="label">Exact location (pin on map)</label>
               <div className="grid grid-cols-2 gap-3">
                 <input className="input-field" placeholder="Latitude" value={form.latitude} onChange={(e) => set("latitude", e.target.value)} />
                 <input className="input-field" placeholder="Longitude" value={form.longitude} onChange={(e) => set("longitude", e.target.value)} />
@@ -157,7 +255,54 @@ export default function BuyerRegisterPage() {
                 {locating ? "Locating…" : "📍 Use my current location"}
               </button>
             </div>
-            <p className="text-xs text-gray-500">You can add more delivery locations later from your profile.</p>
+            <div>
+              <label className="label">Photo of your location (storefront, entrance, warehouse…)</label>
+              <input type="file" accept="image/*" onChange={handlePhotoUpload} className="text-sm" />
+              {uploadingPhoto && <p className="text-xs text-gray-400">Uploading…</p>}
+              {form.businessPhotoUrl && <img src={form.businessPhotoUrl} alt="" className="mt-2 h-28 w-full rounded-lg object-cover" />}
+            </div>
+          </>
+        )}
+
+        {step === 3 && (
+          <>
+            <h2 className="text-lg font-bold">What do you typically purchase?</h2>
+            <p className="text-sm text-gray-500">This is your recurring demand profile — not an order. It helps us plan matches for you.</p>
+            {demand.map((row, i) => (
+              <div key={i} className="card space-y-2">
+                <select className="input-field" value={row.produceCategoryId} onChange={(e) => updateDemandRow(i, { produceCategoryId: e.target.value })}>
+                  <option value="">Select product…</option>
+                  {Object.entries(grouped).map(([family, items]) => (
+                    <optgroup key={family} label={family}>
+                      {items.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </optgroup>
+                  ))}
+                </select>
+                <div className="grid grid-cols-2 gap-2">
+                  <input className="input-field" placeholder="Typical quantity" value={row.typicalQuantity} onChange={(e) => updateDemandRow(i, { typicalQuantity: e.target.value })} />
+                  <select className="input-field" value={row.unit} onChange={(e) => updateDemandRow(i, { unit: e.target.value })}>
+                    <option value="kg">kg</option><option value="tonnes">tonnes</option><option value="boxes">boxes</option><option value="crates">crates</option>
+                  </select>
+                </div>
+                <select className="input-field" value={row.frequency} onChange={(e) => updateDemandRow(i, { frequency: e.target.value })}>
+                  {DEMAND_FREQUENCIES.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
+                </select>
+                {demand.length > 1 && <button type="button" onClick={() => removeDemandRow(i)} className="text-xs font-semibold text-red-500">Remove</button>}
+              </div>
+            ))}
+            <button type="button" onClick={addDemandRow} className="btn-secondary">+ Add another product</button>
+          </>
+        )}
+
+        {step === 4 && (
+          <>
+            <h2 className="text-lg font-bold">Review &amp; create account</h2>
+            <div className="card space-y-1 text-sm">
+              <p><strong>{form.firstName} {form.lastName}</strong> · {form.position} · {form.email}</p>
+              <p>{form.businessName} — {form.city}, {form.governorate}</p>
+              <p>{form.crDocumentUrl ? "✓ CR document uploaded" : "No CR document uploaded yet"}</p>
+              <p>{demand.filter((d) => d.produceCategoryId).length} recurring product(s) in demand profile</p>
+            </div>
           </>
         )}
 

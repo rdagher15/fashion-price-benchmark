@@ -6,7 +6,7 @@ import { StatusPill } from "@/components/StatusPill";
 import { formatDate, formatMoney, deliveryTimingLabel } from "@/lib/format";
 import BuyerOrderActions from "@/components/BuyerOrderActions";
 import ReviewForm from "@/components/ReviewForm";
-import { ORDER_STATUS_FLOW, ORDER_STATUS } from "@/lib/constants";
+import { ORDER_STATUS_FLOW, ORDER_STATUS, DISCREPANCY_TYPES } from "@/lib/constants";
 
 export default async function BuyerOrderDetail({ params }: { params: { id: string } }) {
   const user = await getCurrentUser();
@@ -14,12 +14,14 @@ export default async function BuyerOrderDetail({ params }: { params: { id: strin
 
   const order = await prisma.order.findUnique({
     where: { id: params.id },
-    include: { farmerProfile: { include: { user: true } }, reviews: true },
+    include: { farmerProfile: { include: { user: true } }, reviews: true, listing: true, requirement: true },
   });
   if (!order) notFound();
   if (order.buyerProfileId !== profile.id) redirect("/buyer/orders");
 
   const currentIdx = ORDER_STATUS_FLOW.indexOf(order.status);
+  const discrepancyTypes: string[] = order.discrepancyTypesJson ? JSON.parse(order.discrepancyTypesJson) : [];
+  const discrepancyPhotos: string[] = order.discrepancyPhotosJson ? JSON.parse(order.discrepancyPhotosJson) : [];
 
   return (
     <div>
@@ -27,17 +29,19 @@ export default async function BuyerOrderDetail({ params }: { params: { id: strin
       <div className="space-y-4 px-4 py-4">
         <div className="flex items-center justify-between">
           <StatusPill status={order.status} />
-          <span className="text-xs font-semibold text-harvest-600">{deliveryTimingLabel(order.deliveryDate)}</span>
+          <span className="text-xs font-semibold text-mustard-600">{deliveryTimingLabel(order.deliveryDate)}</span>
         </div>
 
-        <div className="flex justify-between">
-          {ORDER_STATUS_FLOW.map((s, i) => (
-            <div key={s} className="flex flex-1 flex-col items-center">
-              <div className={`h-2 w-2 rounded-full ${i <= currentIdx ? "bg-brand-600" : "bg-gray-200"}`} />
-              {i < ORDER_STATUS_FLOW.length - 1 && <div className={`mt-1 h-0.5 w-full ${i < currentIdx ? "bg-brand-600" : "bg-gray-200"}`} />}
-            </div>
-          ))}
-        </div>
+        {currentIdx >= 0 && (
+          <div className="flex justify-between">
+            {ORDER_STATUS_FLOW.map((s, i) => (
+              <div key={s} className="flex flex-1 flex-col items-center">
+                <div className={`h-2 w-2 rounded-full ${i <= currentIdx ? "bg-brand-600" : "bg-gray-200"}`} />
+                {i < ORDER_STATUS_FLOW.length - 1 && <div className={`mt-1 h-0.5 w-full ${i < currentIdx ? "bg-brand-600" : "bg-gray-200"}`} />}
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="card space-y-1 text-sm">
           <p className="mb-1 text-xs font-semibold uppercase text-gray-400">Farmer</p>
@@ -54,13 +58,40 @@ export default async function BuyerOrderDetail({ params }: { params: { id: strin
           <Row label="Delivery method" value={order.deliveryMethod.replace("_", " ")} />
         </div>
 
-        <BuyerOrderActions orderId={order.id} status={order.status} expectedQuantity={order.quantity} />
+        <BuyerOrderActions
+          orderId={order.id}
+          status={order.status}
+          expectedQuantity={order.quantity}
+          unit={order.unit}
+          originalSpec={{
+            grade: order.listing.grade,
+            qualityLevel: order.listing.qualityLevel,
+            productionMethod: order.listing.productionMethod,
+            packagingType: order.listing.packagingType,
+            qualityRequirement: order.requirement?.qualityRequirement ?? null,
+          }}
+        />
+
+        {order.status === ORDER_STATUS.DISCREPANCY && (
+          <div className="card space-y-1 text-sm border-red-200 bg-red-50/50">
+            <p className="mb-1 text-xs font-semibold uppercase text-red-500">Discrepancy reported</p>
+            <p className="font-medium text-gray-800">{discrepancyTypes.map((t) => DISCREPANCY_TYPES.find((d) => d.value === t)?.label || t).join(", ")}</p>
+            {order.discrepancyNote && <p className="text-gray-600">{order.discrepancyNote}</p>}
+            {discrepancyPhotos.length > 0 && (
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                {discrepancyPhotos.map((url) => <img key={url} src={url} className="h-16 w-full rounded object-cover" alt="" />)}
+              </div>
+            )}
+            <p className="text-xs text-gray-400">Reported {order.discrepancyReportedAt ? formatDate(order.discrepancyReportedAt) : ""}</p>
+          </div>
+        )}
 
         {order.status === ORDER_STATUS.COMPLETED && order.receivedQuantity != null && (
           <div className="card space-y-1 text-sm">
             <p className="mb-1 text-xs font-semibold uppercase text-gray-400">Your confirmation</p>
             <Row label="Received quantity" value={`${order.receivedQuantity} ${order.unit}`} />
             <Row label="Condition" value={order.receivedCondition || "—"} />
+            {order.signatureName && <Row label="Signed by" value={`${order.signatureName} · ${order.signedAt ? new Date(order.signedAt).toLocaleString() : ""}`} />}
           </div>
         )}
 

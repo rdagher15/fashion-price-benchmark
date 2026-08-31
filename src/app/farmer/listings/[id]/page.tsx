@@ -6,6 +6,8 @@ import TopBar from "@/components/TopBar";
 import { StatusPill } from "@/components/StatusPill";
 import { formatDate, formatMoney } from "@/lib/format";
 import { matchLabel } from "@/lib/matching";
+import { distanceBandLabel } from "@/lib/constants";
+import { anonymizedBuyerLabel } from "@/lib/anonymize";
 
 export default async function FarmerListingDetail({ params }: { params: { id: string } }) {
   const user = await getCurrentUser();
@@ -15,7 +17,7 @@ export default async function FarmerListingDetail({ params }: { params: { id: st
     where: { id: params.id },
     include: {
       produceCategory: true,
-      offers: { include: { buyerProfile: true }, orderBy: { createdAt: "desc" } },
+      offers: { include: { buyerProfile: true, order: true }, orderBy: { createdAt: "desc" } },
       matches: { include: { requirement: { include: { buyerProfile: true } } }, orderBy: { score: "desc" } },
     },
   });
@@ -23,6 +25,16 @@ export default async function FarmerListingDetail({ params }: { params: { id: st
   if (listing.farmerProfileId !== profile.id) redirect("/farmer/listings");
 
   const methods: string[] = JSON.parse(listing.deliveryMethodsJson || "[]");
+
+  const decoratedOffers = await Promise.all(
+    listing.offers.map(async (o) => ({ ...o, buyerLabel: o.order ? o.buyerProfile.businessName : await anonymizedBuyerLabel(o.buyerProfile) }))
+  );
+  const decoratedMatches = await Promise.all(
+    listing.matches.map(async (m) => ({ ...m, buyerLabel: await anonymizedBuyerLabel(m.requirement.buyerProfile) }))
+  );
+
+  const cluster = decoratedMatches.find((m) => m.clusterId);
+  const clusterMembers = cluster ? decoratedMatches.filter((m) => m.clusterId === cluster.clusterId) : [];
 
   return (
     <div>
@@ -48,11 +60,11 @@ export default async function FarmerListingDetail({ params }: { params: { id: st
           <section>
             <h2 className="mb-2 text-sm font-bold text-gray-800">Offers ({listing.offers.length})</h2>
             <div className="space-y-2">
-              {listing.offers.map((o) => (
+              {decoratedOffers.map((o) => (
                 <Link key={o.id} href={`/farmer/offers/${o.id}`} className="card block">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold">{o.buyerProfile.businessName}</p>
-                    <span className="text-xs font-bold text-harvest-600">{formatMoney(o.price)}/{o.priceUnit}</span>
+                    <p className="text-sm font-semibold">{o.buyerLabel}</p>
+                    <span className="text-xs font-bold text-mustard-600">{formatMoney(o.price)}/{o.priceUnit}</span>
                   </div>
                   <p className="text-xs text-gray-500">{o.quantity} {listing.unit} · {o.status}</p>
                 </Link>
@@ -61,17 +73,37 @@ export default async function FarmerListingDetail({ params }: { params: { id: st
           </section>
         )}
 
-        {listing.matches.length > 0 && (
+        {cluster && (
+          <section>
+            <h2 className="mb-2 text-sm font-bold text-gray-800">Suggested fulfillment group</h2>
+            <div className="card border-mustard-400 bg-mustard-50/40">
+              <p className="text-sm font-semibold text-gray-800">
+                {clusterMembers.length} nearby buyers could together take {cluster.quantityUtilizationScore}% of this listing
+              </p>
+              <p className="text-xs text-gray-500">Prioritizing this group over a single distant buyer maximizes how much of your stock sells this window.</p>
+              <div className="mt-2 space-y-1">
+                {clusterMembers.map((m) => (
+                  <div key={m.id} className="flex justify-between text-xs text-gray-600">
+                    <span>{m.buyerLabel}</span>
+                    <span>{m.requirement.quantity} {m.requirement.unit}{m.distanceKm != null ? ` · ${m.distanceKm} km` : ""}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {decoratedMatches.length > 0 && (
           <section>
             <h2 className="mb-2 text-sm font-bold text-gray-800">Matching buyers</h2>
             <div className="space-y-2">
-              {listing.matches.slice(0, 10).map((m) => (
+              {decoratedMatches.slice(0, 10).map((m) => (
                 <div key={m.id} className="card">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold">{m.requirement.buyerProfile.businessName}</p>
+                    <p className="text-sm font-semibold">{m.buyerLabel}</p>
                     <span className="text-xs font-bold text-brand-700">{Math.round(m.score)}% · {matchLabel(m.score)}</span>
                   </div>
-                  <p className="text-xs text-gray-500">Needs {m.requirement.quantity} {m.requirement.unit} by {formatDate(m.requirement.requiredDate)}{m.distanceKm != null ? ` · ${m.distanceKm} km away` : ""}</p>
+                  <p className="text-xs text-gray-500">Needs {m.requirement.quantity} {m.requirement.unit} by {formatDate(m.requirement.requiredDate)}{m.distanceKm != null ? ` · ${m.distanceKm} km away (${distanceBandLabel(m.distanceKm)})` : ""}</p>
                 </div>
               ))}
             </div>

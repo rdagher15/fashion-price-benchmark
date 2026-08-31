@@ -1,5 +1,6 @@
 import { prisma } from "./db";
 import { haversineKm } from "./geo";
+import { clusterMatchesForListing } from "./clustering";
 import type { Listing, Requirement } from "@prisma/client";
 
 export type MatchScoreBreakdown = {
@@ -24,7 +25,11 @@ function clamp(n: number, lo = 0, hi = 100) {
 export async function getMatchingConfig() {
   let config = await prisma.matchingConfig.findUnique({ where: { id: "singleton" } });
   if (!config) {
-    config = await prisma.matchingConfig.create({ data: { id: "singleton" } });
+    // Concurrent first-load requests can race to create the singleton row;
+    // fall back to re-reading rather than surfacing the unique-constraint error.
+    config = await prisma.matchingConfig.create({ data: { id: "singleton" } }).catch(() =>
+      prisma.matchingConfig.findUniqueOrThrow({ where: { id: "singleton" } })
+    );
   }
   return config;
 }
@@ -167,6 +172,7 @@ export async function generateMatchesForListing(listingId: string) {
     });
     results.push(match);
   }
+  await clusterMatchesForListing(listing.id);
   return results;
 }
 
@@ -206,6 +212,9 @@ export async function generateMatchesForRequirement(requirementId: string) {
       },
     });
     results.push(match);
+  }
+  for (const listing of candidates) {
+    await clusterMatchesForListing(listing.id);
   }
   return results;
 }
