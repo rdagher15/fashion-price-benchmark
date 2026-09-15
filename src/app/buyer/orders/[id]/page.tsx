@@ -6,6 +6,7 @@ import { StatusPill } from "@/components/StatusPill";
 import { formatDate, formatMoney, deliveryTimingLabel } from "@/lib/format";
 import BuyerOrderActions from "@/components/BuyerOrderActions";
 import ReviewForm from "@/components/ReviewForm";
+import { DisputedNotice, ResolutionSummary } from "@/components/OrderResolution";
 import { ORDER_STATUS_FLOW, ORDER_STATUS, DISCREPANCY_TYPES } from "@/lib/constants";
 
 export default async function BuyerOrderDetail({ params }: { params: { id: string } }) {
@@ -83,7 +84,20 @@ export default async function BuyerOrderDetail({ params }: { params: { id: strin
               </div>
             )}
             <p className="text-xs text-gray-400">Reported {order.discrepancyReportedAt ? formatDate(order.discrepancyReportedAt) : ""}</p>
+            <p className="text-xs text-gray-400">Waiting for the farmer's response.</p>
           </div>
+        )}
+
+        {order.status === ORDER_STATUS.DISPUTED && <DisputedNotice farmerResponseNote={order.farmerResponseNote} />}
+
+        {order.resolutionType && (
+          <ResolutionSummary
+            resolutionType={order.resolutionType}
+            resolutionAmount={order.resolutionAmount}
+            resolutionNote={order.resolutionNote}
+            resolvedAt={order.resolvedAt}
+            resolvedBy={order.resolvedBy}
+          />
         )}
 
         {order.status === ORDER_STATUS.COMPLETED && order.receivedQuantity != null && (

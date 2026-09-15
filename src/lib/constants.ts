@@ -45,8 +45,17 @@ export const ORDER_STATUS = {
   CONFIRMED: "Confirmed",
   COMPLETED: "Completed",
   DISCREPANCY: "Discrepancy Reported",
+  DISPUTED: "Disputed - Under Review",
   CANCELLED: "Cancelled",
 } as const;
+
+export const RESOLUTION_TYPES = [
+  { value: "REFUND_FULL", label: "Full refund" },
+  { value: "REFUND_PARTIAL", label: "Partial refund" },
+  { value: "REPLACEMENT", label: "Replacement / re-delivery" },
+  { value: "CREDIT", label: "Store credit" },
+  { value: "DISMISSED", label: "Claim dismissed" },
+];
 
 export const ORDER_STATUS_FLOW: string[] = [
   ORDER_STATUS.ACCEPTED,
@@ -197,7 +206,8 @@ export type UxBucket = "needs_action" | "in_progress" | "awaiting_other" | "comp
 export function orderUxBucket(status: string, viewerRole: "FARMER" | "BUYER"): UxBucket {
   if (status === ORDER_STATUS.COMPLETED) return "completed";
   if (status === ORDER_STATUS.CANCELLED) return "cancelled";
-  if (status === ORDER_STATUS.DISCREPANCY) return "needs_action";
+  if (status === ORDER_STATUS.DISCREPANCY) return viewerRole === "FARMER" ? "needs_action" : "awaiting_other";
+  if (status === ORDER_STATUS.DISPUTED) return "awaiting_other";
   if (status === ORDER_STATUS.DELIVERED) {
     return viewerRole === "BUYER" ? "needs_action" : "awaiting_other";
   }

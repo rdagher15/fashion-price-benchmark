@@ -492,6 +492,18 @@ model Order {
   discrepancyPhotosJson String    @default("[]")
   discrepancyReportedAt DateTime?
 
+  // Farmer's response to a discrepancy report: either resolves it directly
+  // (resolution* fields) or disputes it (farmerResponseNote), which escalates
+  // the order to admin arbitration (status Disputed).
+  farmerResponseNote String?
+
+  // How a discrepancy/dispute was ultimately settled, by farmer or admin.
+  resolutionType   String? // REFUND_FULL|REFUND_PARTIAL|REPLACEMENT|CREDIT|DISMISSED
+  resolutionAmount Float?
+  resolutionNote   String?
+  resolvedAt       DateTime?
+  resolvedBy       String? // FARMER|ADMIN
+
   cancelReason String?
 
   createdAt DateTime @default(now())

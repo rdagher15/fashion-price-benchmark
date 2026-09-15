@@ -6,6 +6,8 @@ import { StatusPill } from "@/components/StatusPill";
 import { formatDate, formatMoney, deliveryTimingLabel } from "@/lib/format";
 import FarmerOrderActions from "@/components/FarmerOrderActions";
 import ReviewForm from "@/components/ReviewForm";
+import DiscrepancyResponse from "@/components/DiscrepancyResponse";
+import { DisputedNotice, ResolutionSummary } from "@/components/OrderResolution";
 import { DISCREPANCY_TYPES, ORDER_STATUS } from "@/lib/constants";
 
 export default async function FarmerOrderDetail({ params }: { params: { id: string } }) {
@@ -54,13 +56,28 @@ export default async function FarmerOrderDetail({ params }: { params: { id: stri
         />
 
         {order.status === ORDER_STATUS.DISCREPANCY && (
-          <div className="card space-y-1 text-sm border-red-200 bg-red-50/50">
-            <p className="mb-1 text-xs font-semibold uppercase text-red-500">Buyer reported a discrepancy</p>
-            <p className="font-medium text-gray-800">
-              {(order.discrepancyTypesJson ? JSON.parse(order.discrepancyTypesJson) as string[] : []).map((t) => DISCREPANCY_TYPES.find((d) => d.value === t)?.label || t).join(", ")}
-            </p>
-            {order.discrepancyNote && <p className="text-gray-600">{order.discrepancyNote}</p>}
-          </div>
+          <>
+            <div className="card space-y-1 text-sm border-red-200 bg-red-50/50">
+              <p className="mb-1 text-xs font-semibold uppercase text-red-500">Buyer reported a discrepancy</p>
+              <p className="font-medium text-gray-800">
+                {(order.discrepancyTypesJson ? JSON.parse(order.discrepancyTypesJson) as string[] : []).map((t) => DISCREPANCY_TYPES.find((d) => d.value === t)?.label || t).join(", ")}
+              </p>
+              {order.discrepancyNote && <p className="text-gray-600">{order.discrepancyNote}</p>}
+            </div>
+            <DiscrepancyResponse orderId={order.id} orderTotal={order.totalValue} />
+          </>
+        )}
+
+        {order.status === ORDER_STATUS.DISPUTED && <DisputedNotice farmerResponseNote={order.farmerResponseNote} />}
+
+        {order.resolutionType && (
+          <ResolutionSummary
+            resolutionType={order.resolutionType}
+            resolutionAmount={order.resolutionAmount}
+            resolutionNote={order.resolutionNote}
+            resolvedAt={order.resolvedAt}
+            resolvedBy={order.resolvedBy}
+          />
         )}
 
         {order.status === "Completed" && order.receivedQuantity != null && (
