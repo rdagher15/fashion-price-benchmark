@@ -5,47 +5,59 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Green — positive actions & completed states
+        // Deep green — positive actions & completed states (Dark 2 / Accent 1)
         brand: {
-          50: "#f2f9ee",
-          100: "#e2f1d8",
-          200: "#c6e3b3",
-          300: "#a1d183",
-          400: "#7dbb5a",
-          500: "#5a9c3a",
-          600: "#437c2c",
-          700: "#356225",
-          800: "#2d4f21",
-          900: "#27431f",
+          50: "#eef4f0",
+          100: "#d7e6dc",
+          200: "#b0cebb",
+          300: "#85b096",
+          400: "#5f9476",
+          500: "#427a5b",
+          600: "#316248",
+          700: "#274f3a",
+          800: "#1f3f2e",
+          900: "#172f22",
         },
-        // Mustard / dark yellow — primary accent & CTAs
+        // Mustard / gold-brown — primary accent, CTAs & hyperlink (Accent 2 / Hyperlink)
         mustard: {
-          50: "#fdf8ec",
-          100: "#faedc7",
-          200: "#f4da8f",
-          300: "#eec257",
-          400: "#e5a930",
-          500: "#d38f1f",
-          600: "#b5721a",
-          700: "#92591b",
+          50: "#f8f1e3",
+          100: "#efe0c1",
+          200: "#e0c88e",
+          300: "#cda85c",
+          400: "#bd9142",
+          500: "#b8863a",
+          600: "#966d2f",
+          700: "#745426",
         },
         // Warm brown — secondary text & elements
         brown: {
-          50: "#f8f4ee",
-          100: "#ede2d1",
-          200: "#d9c2a3",
-          300: "#bd9c76",
-          400: "#a17f58",
-          500: "#846747",
-          600: "#6b533a",
-          700: "#54412e",
-          800: "#3f3123",
+          50: "#f7f2ea",
+          100: "#ecdfcc",
+          200: "#d4bd9c",
+          300: "#b89b74",
+          400: "#9c7e58",
+          500: "#7f6549",
+          600: "#66503a",
+          700: "#4f3d2e",
+          800: "#3a2c21",
         },
-        // Cream / beige — backgrounds & neutral surfaces
+        // Cream / tan — backgrounds & neutral surfaces (Accent 3 / Accent 4)
         cream: {
-          50: "#fdfbf7",
-          100: "#f9f4ea",
-          200: "#f2e9d8",
+          50: "#fbf9f4",
+          100: "#f3ecdf",
+          200: "#ecdec2",
+          300: "#dfc7ac",
+        },
+        // Sage / olive — muted secondary accent & followed hyperlink (Accent 5 / Accent 6)
+        sage: {
+          50: "#f6f7ef",
+          100: "#e9edd7",
+          200: "#d3d9b0",
+          300: "#bdc794",
+          400: "#a6b584",
+          500: "#8fa06a",
+          600: "#758554",
+          700: "#5c6942",
         },
       },
       fontFamily: {

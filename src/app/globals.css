@@ -3,15 +3,14 @@
 @tailwind utilities;
 
 html, body {
-  background: #f1e9d8;
-  color: #3f3123;
+  @apply bg-cream-200 text-brown-800;
 }
 
 .mobile-shell {
   max-width: 480px;
   margin: 0 auto;
   min-height: 100dvh;
-  background: #fdfbf7;
+  @apply bg-cream-50;
   position: relative;
   box-shadow: 0 0 0 1px rgba(0,0,0,0.04);
 }
