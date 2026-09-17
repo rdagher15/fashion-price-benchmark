@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  @apply bg-cream-200 text-brown-800;
+}
+
+.mobile-shell {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  @apply bg-cream-50;
+  position: relative;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.04);
+}
+
+.page-scroll {
+  padding-bottom: 84px;
+}
+
+/* Mustard is the primary accent/CTA color; green is reserved for positive
+   actions & completed states; brown carries secondary text and outlines. */
+.btn-primary {
+  @apply w-full rounded-xl bg-mustard-500 text-white font-semibold py-3 px-4 text-center active:bg-mustard-600 disabled:opacity-40 transition;
+}
+
+.btn-secondary {
+  @apply w-full rounded-xl bg-white border border-brown-300 text-brown-700 font-semibold py-3 px-4 text-center active:bg-cream-100 transition;
+}
+
+.btn-ghost {
+  @apply rounded-lg text-sm font-medium text-brown-500 px-3 py-2;
+}
+
+.input-field {
+  @apply w-full rounded-lg border border-brown-200 px-3 py-2.5 text-sm text-brown-800 focus:outline-none focus:ring-2 focus:ring-mustard-300 focus:border-mustard-400;
+}
+
+.card {
+  @apply bg-white rounded-2xl shadow-sm border border-cream-200 p-4;
+}
+
+.label {
+  @apply block text-xs font-semibold text-brown-500 mb-1 uppercase tracking-wide;
+}

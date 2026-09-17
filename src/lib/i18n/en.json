@@ -1,0 +1,16 @@
+{
+  "app.name": "HarvestLink",
+  "app.tagline": "Connecting farmers and fresh-produce buyers",
+  "nav.home": "Home",
+  "nav.listings": "Listings",
+  "nav.offers": "Offers",
+  "nav.orders": "Orders",
+  "nav.profile": "Profile",
+  "nav.search": "Search",
+  "nav.requirements": "Requirements",
+  "common.save": "Save",
+  "common.cancel": "Cancel",
+  "common.next": "Next",
+  "common.back": "Back",
+  "common.submit": "Submit"
+}
