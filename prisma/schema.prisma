@@ -322,7 +322,7 @@ model Requirement {
   // retailerAnonymousLabel() in lib/constants.ts.
   anonymous Boolean @default(true)
 
-  status String @default("ACTIVE") // Active|Matched|Offer Sent|Fulfilled|Cancelled|Expired
+  status String @default("Active") // Active|Matched|Offer Sent|Fulfilled|Cancelled|Expired
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
